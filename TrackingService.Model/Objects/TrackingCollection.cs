@@ -1,0 +1,13 @@
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace TrackingService.Model.Objects {
+	/// <summary>
+	/// Used to sign a class as a tracking service object collection.
+	/// </summary>
+	public abstract class TrackingCollection {
+		[BsonId]
+		[BsonRepresentation(BsonType.ObjectId)]
+		public string Id { get; set; }
+	}
+}
