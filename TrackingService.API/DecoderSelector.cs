@@ -41,7 +41,7 @@ namespace TrackingService.API {
 					await new WatchDecoder().ReceiveAsync(transport);
 					break;
 				default:
-					throw new NullReferenceException("Couldn't determine protocol decoder.");
+					throw new NullReferenceException($"Couldn't determine protocol decoder for \"{protocol}\".");
 			}
 			Logger.LogInformation($"{connection.ConnectionId} disconnected.");
 		}
