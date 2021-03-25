@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TrackingService.API.Decoders.DecodedObjects;
+using TrackingService.API.Extensions;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {
@@ -23,25 +23,26 @@ namespace TrackingService.API.Decoders {
 	/// Sample message: <c>[SG*8800000015*000D*LK,50,50,100]</c>
 	/// </remarks>
 	public class WatchDecoder : Decoder {
-		private string Vendor;
-		private string Imei;
 		private int ContentLength;
 		private string Content;
-		private int Steps;
-		private int Battery;
+		public Position Watch = new();
+		public string Vendor;
+		public string Imei;
 
-		protected override async Task DecodeAsync() {
-			if (!Data.StartsWith("[") || !Data.EndsWith("]")) {
-				// obviously bad message
-				return;
+		protected override async Task<Position> DecodeAsync(string data) {
+			if (!data.StartsWith("[") || !data.EndsWith("]")) {
+				// discard, obviously bad message
+				return null;
 			}
 
 			// remove "[" and "]"
-			var message = Data[1..^1];
+			var message = data[1..^1];
 			var tokenizedMessage = message.Split("*");
 
+			Watch.Protocol = "watch";
 			Vendor = tokenizedMessage[0];
 			Imei = tokenizedMessage[1];
+			Watch.Imei = tokenizedMessage[1];
 			ContentLength = Convert.ToInt32(tokenizedMessage[2], 16); // length is a hex number
 			Content = tokenizedMessage[3];
 			var splitContent = Content.Split(",");
@@ -50,35 +51,56 @@ namespace TrackingService.API.Decoders {
 			if (messageMode == "LK") {
 				// LK = status update sent every few minutes, may contain steps, "rolling times" (?) and battery level
 				if (splitContent.Length > 1) {
-					_ = int.TryParse(splitContent[1], out Steps);
+					Watch.MiscInfo.Steps = int.Parse(splitContent[1]);
 					// index 2 - "rolling times"
-					_ = int.TryParse(splitContent[3], out Battery);
+					Watch.MiscInfo.Battery = splitContent[3] + "%";
 				}
 				await WatchRespond("LK");
+
 			} else if (messageMode == "UD" || messageMode == "UD2" || messageMode == "AL") {
 				// UD = location data
-				// UD2 = blind spot location data (last known spot? LBS location? looks exactly the same)
-				// AL = alarm data (looks exactly the same as UD/UD2)
-				throw new NotImplementedException();
-			} else if (messageMode == "WAD" || messageMode == "WG") {
-				// WAD = address request
-				// WG = hard to tell, documentation says "Request instruction of latitude and longitude"
-				// I may avoid implementing it altogether
-				throw new NotImplementedException();
+				// UD2 = blind spot location data
+				// AL = alarm data
+				// all look/work exactly the same
+				var date = splitContent[1].InsertEvery(2, '.');
+				var time = splitContent[2].InsertEvery(2, ':');
+				Watch.Date = Convert.ToDateTime($"{date} {time}", new CultureInfo("en-GB"));
+				var hasPosition = splitContent[3] == "A";
+
+				// InvariantCulture needed to parse dot as a floating point
+				var latitude = float.Parse(splitContent[4], CultureInfo.InvariantCulture);
+				if (splitContent[5] == "S") latitude *= -1;
+				var longitude = float.Parse(splitContent[6], CultureInfo.InvariantCulture);
+				if (splitContent[7] == "E") longitude *= -1;
+				Watch.Lat = latitude;
+				Watch.Lon = longitude;
+
+				Watch.Speed = float.Parse(splitContent[8], CultureInfo.InvariantCulture).ToKph();
+				Watch.Direction = float.Parse(splitContent[9], CultureInfo.InvariantCulture);
+				Watch.MiscInfo.Alt = int.Parse(splitContent[10]);
+				Watch.MiscInfo.Satellites = int.Parse(splitContent[11]);
+				Watch.MiscInfo.SignalStrength = int.Parse(splitContent[12]);
+				Watch.MiscInfo.Battery = splitContent[13] + "%";
+				Watch.MiscInfo.Steps = int.Parse(splitContent[14]);
+				// index 15 - "rolling times"
+				var alarmCode = int.Parse(splitContent[16]); // in protocol it's padded to four 0s, int.Parse removes it
+				if (messageMode != "AL") alarmCode = -1;
+				Watch.MiscInfo.Alarm = (AlarmKinds)alarmCode;
+				Watch.MiscInfo.Mcc = int.Parse(splitContent[19]);
+				Watch.MiscInfo.Mnc = int.Parse(splitContent[20]);				
+
+				if (messageMode == "AL") {
+					await WatchRespond("AL");
+				}
+
+				// shouldn't respond unless in AL mode
 			}
 
-			var result = new Watch {
-				Vendor = Vendor,
-				Imei = Imei,
-				Steps = Steps,
-				Battery = Battery
-			};
-
-			Console.WriteLine(result.ToString());
+			return Watch;
 		}
 
 		private async Task WatchRespond(string content) {
-			var hexLength = ContentLength.ToString("X").PadLeft(4, '0');
+			var hexLength = content.Length.ToString("X").PadLeft(4, '0');
 
 			await Respond($"[{Vendor}*{Imei}*{hexLength}*{content}]");
 		}

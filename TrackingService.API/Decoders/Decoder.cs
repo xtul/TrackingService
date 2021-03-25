@@ -1,8 +1,10 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Pipelines;
 using System.Text;
 using System.Threading.Tasks;
+using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {
 	/// <summary>
@@ -11,7 +13,7 @@ namespace TrackingService.API.Decoders {
 	/// </summary>
 	public abstract class Decoder {
 		/// <summary>Message received from device.</summary>
-		protected string Data;
+		private string Data;
 		private IDuplexPipe Pipe;
 
 		/// <summary>
@@ -24,8 +26,12 @@ namespace TrackingService.API.Decoders {
 				var result = await Pipe.Input.ReadAsync();
 				var buffer = result.Buffer;
 
+				// stringify message, decode it and send to cache
 				Data = Encoding.ASCII.GetString(buffer);
-				await DecodeAsync();
+				var position = await DecodeAsync(Data);
+				if (position is not null) {
+					Startup.PositionCache.Put(position);
+				}
 
 				if (result.IsCompleted) {
 					break;
@@ -36,13 +42,17 @@ namespace TrackingService.API.Decoders {
 		}
 
 		/// <summary>
-		/// Decodes the message and sends the decoded message to cache.
+		/// Decodes the position, which is later sent to cache.
 		/// </summary>
+		/// <param name="data">Data to decode.</param>
 		/// <remarks>
-		///	The message is stored in Data property. Use <see cref="Respond(string)"/> 
+		///	Use <see cref="Respond(string)"/> 
 		///	to send a response to device.
 		/// </remarks>
-		protected abstract Task DecodeAsync();
+		/// <returns>
+		///	A decoded position.
+		/// </returns>
+		protected abstract Task<Position> DecodeAsync(string data);
 
 		/// <summary>
 		/// Sends a <paramref name="message"/> to connected device.

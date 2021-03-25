@@ -17,7 +17,7 @@ namespace TrackingService.API.Decoders {
 	/// also use this protocol, albeit often make off steps from the standard.
 	/// </summary>
 	public class Gt06Decoder : Decoder {
-		protected override Task DecodeAsync() {
+		protected override Task<Position> DecodeAsync(string data) {
 			throw new NotImplementedException();
 		}
 	}

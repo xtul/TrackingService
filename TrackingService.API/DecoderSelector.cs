@@ -36,7 +36,6 @@ namespace TrackingService.API {
 
 			var transport = connection.Transport;
 
-			Logger.LogInformation($"{connection.ConnectionId} connected to protocol {protocol}.");
 			switch (protocol) {
 				case "json":
 					await new JsonDecoder().ReceiveAsync(transport);
@@ -50,7 +49,6 @@ namespace TrackingService.API {
 				default:
 					throw new NullReferenceException($"Couldn't determine protocol decoder for \"{protocol}\".");
 			}
-			Logger.LogInformation($"{connection.ConnectionId} disconnected.");
 		}
 	}
 }

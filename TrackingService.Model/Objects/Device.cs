@@ -8,10 +8,6 @@ using MongoDB.Driver;
 
 namespace TrackingService.Model.Objects {
 	public class Device : TrackingServiceCollection {
-		public string Imei { get; set; }
 		public string Name { get; set; }
-		public float Lon { get; set; }
-		public float Lat { get; set; }
-		public DateTime LastUpdate { get; set; }
 	}
 }

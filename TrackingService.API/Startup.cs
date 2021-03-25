@@ -19,6 +19,7 @@ using TrackingService.Model.Objects;
 namespace TrackingService.API {
 	public class Startup {
 		public IConfiguration Configuration { get; }
+		public static PositionCache PositionCache { get; private set; }
 
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;
@@ -31,9 +32,9 @@ namespace TrackingService.API {
 			services.AddSingleton<IDatabaseSettings>(sp =>
 				sp.GetRequiredService<IOptions<DatabaseSettings>>().Value);
 
+			services.AddSingleton<PositionCache>();
 			services.AddSingleton<PositionStore>();
 			services.AddSingleton<DeviceStore>();
-			services.AddSingleton<PositionCache>();
 
 			services.AddControllers();
 			services.AddSwaggerGen(c => {
@@ -58,6 +59,8 @@ namespace TrackingService.API {
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
 			});
+
+			PositionCache = app.ApplicationServices.GetRequiredService<PositionCache>();
 		}
 	}
 }

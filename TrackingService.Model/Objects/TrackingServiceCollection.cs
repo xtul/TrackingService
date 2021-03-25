@@ -9,5 +9,9 @@ namespace TrackingService.Model.Objects {
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; set; }
+		/// <summary>
+		/// International Mobile Equipment Identity (basically, device identifier).
+		/// </summary>
+		public string Imei { get; set; }
 	}
 }

@@ -16,14 +16,16 @@ namespace TrackingService.API.Decoders {
 	/// This decoder is meant to be used by a (NYI) mobile application.
 	/// </summary>
 	public class JsonDecoder : Decoder {
-		protected override async Task DecodeAsync() {
-			var json = JsonConvert.DeserializeObject<JsonMessage>(Data);
+		protected override async Task<Position> DecodeAsync(string data) {
+			var json = JsonConvert.DeserializeObject<JsonMessage>(data);
 
 			if (json != null) {
 				await Respond(json.Imei);
 			} else {
 				await Respond("0");
 			}
+
+			return null;
 		}
 	}
 }

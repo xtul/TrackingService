@@ -9,7 +9,6 @@ namespace TrackingService.API.Storage {
     /// <summary>
     /// Default MongoDB collection CRUD operations.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
 	public abstract class DefaultStore<T> where T : TrackingServiceCollection {
         private readonly IMongoCollection<T> _mongoCollection;
 
@@ -17,11 +16,16 @@ namespace TrackingService.API.Storage {
             var client = new MongoClient(settings.ConnectionString);
             var database = client.GetDatabase(settings.DatabaseName);
 
-            _mongoCollection = database.GetCollection<T>(settings.PositionsName);
+            var collectionName = typeof(T).Name;
+
+            _mongoCollection = database.GetCollection<T>(settings.GetCollectionByString(collectionName));
         }
 
         public List<T> Get() =>
             _mongoCollection.Find(x => true).ToList();
+
+        public T GetByImei(string imei) =>
+            _mongoCollection.Find(x => x.Imei == imei).FirstOrDefault();
 
         public T Get(string id) =>
             _mongoCollection.Find(x => x.Id == id).FirstOrDefault();
