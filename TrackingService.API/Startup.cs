@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TrackingService.API.Cache;
 using TrackingService.API.Storage;
 using TrackingService.Model.Objects;
 
@@ -31,6 +32,8 @@ namespace TrackingService.API {
 				sp.GetRequiredService<IOptions<DatabaseSettings>>().Value);
 
 			services.AddSingleton<PositionStore>();
+			services.AddSingleton<DeviceStore>();
+			services.AddSingleton<PositionCache>();
 
 			services.AddControllers();
 			services.AddSwaggerGen(c => {

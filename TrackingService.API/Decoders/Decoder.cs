@@ -30,7 +30,7 @@ namespace TrackingService.API.Decoders {
 		protected abstract Task DecodeAsync();
 
 		protected async Task Respond(string data) {
-			var buffer = Encoding.UTF8.GetBytes(data);
+			var buffer = Encoding.ASCII.GetBytes(data);
 			await Respond(buffer);
 		}
 

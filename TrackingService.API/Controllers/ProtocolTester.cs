@@ -23,14 +23,14 @@ namespace TrackingService.API.Controllers {
 			client.Connect("127.0.0.1", port);
 
 			// send a message to the connection's stream
-			var buffer = Encoding.UTF8.GetBytes(message);
+			var buffer = Encoding.ASCII.GetBytes(message);
 			var stream = client.GetStream();
 			stream.Write(buffer, 0, buffer.Length);
 
 			// receive response
 			buffer = new byte[256];
 			var bytes = stream.Read(buffer, 0, buffer.Length);
-			var response = Encoding.UTF8.GetString(buffer, 0, bytes);
+			var response = Encoding.ASCII.GetString(buffer, 0, bytes);
 
 			// close the stream and connection
 			stream.Close();
