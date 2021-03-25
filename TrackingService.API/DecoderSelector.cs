@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 using TrackingService.API.Decoders;
 
 namespace TrackingService.API {
+	/// <summary>
+	/// Decides which decoder should be chosen to a given port and 
+	///	passes the connection to it.
+	/// </summary>
 	internal class DecoderSelector : ConnectionHandler {
 
 		private readonly ILogger<DecoderSelector> Logger;
@@ -26,7 +30,7 @@ namespace TrackingService.API {
 
 		public override async Task OnConnectedAsync(ConnectionContext connection) {
 			var port = new Uri("http://" + connection.LocalEndPoint.ToString()).Port;
-			var protocol = Configuration.Where(x => int.Parse(x.Value) == port)
+			var protocol = Configuration.Where(x => x.Value == port.ToString())
 										.Select(x => x.Key)
 										.FirstOrDefault();
 
@@ -39,6 +43,9 @@ namespace TrackingService.API {
 					break;
 				case "watch":
 					await new WatchDecoder().ReceiveAsync(transport);
+					break;
+				case "gt06":
+					await new Gt06Decoder().ReceiveAsync(transport);
 					break;
 				default:
 					throw new NullReferenceException($"Couldn't determine protocol decoder for \"{protocol}\".");

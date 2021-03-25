@@ -7,6 +7,10 @@ using TrackingService.API.Storage;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Cache {
+	/// <summary>
+	/// Stores positions in-memory for quick access and persists them
+	/// in a database.
+	/// </summary>
 	public class PositionCache {
 		private readonly DeviceStore _deviceStore;
 		private readonly PositionStore _positionStore;

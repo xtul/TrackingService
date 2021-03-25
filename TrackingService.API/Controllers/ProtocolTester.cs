@@ -8,6 +8,9 @@ using System.Text;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Controllers {
+	/// <summary>
+	/// Simple API endpoint that sends TCP messages to decoders to help with testing.
+	/// </summary>
 	[Route("api/testing")]
 	[ApiController]
 	public class ProtocolTester : ControllerBase {

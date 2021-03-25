@@ -11,13 +11,12 @@ namespace TrackingService.API.Decoders.DecodedObjects {
 		public int Battery { get; set; }
 
 		public override string ToString() {
-			return			$"Received Watch:\n" +
-							$"-------------------------------------\n" +
-							$"Vendor: {Vendor}\n" +
-							$"IMEI: {Imei}\n" +
-							$"Steps: {Steps}\n" +
-							$"Battery: {Battery}\n" +
-							$"-------------------------------------";
+			return	$"-------------------------------------\n" +
+					$"Vendor: {Vendor}\n" +
+					$"IMEI: {Imei}\n" +
+					$"Steps: {Steps}\n" +
+					$"Battery: {Battery}\n" +
+					$"-------------------------------------";
 		}
 	}
 }

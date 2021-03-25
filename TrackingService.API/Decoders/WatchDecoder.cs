@@ -15,6 +15,13 @@ using TrackingService.API.Decoders.DecodedObjects;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {
+	/// <summary>
+	/// Watch is a protocol commonly used by cheap chinese watches or 
+	/// animal GPS trackers. Very likely even Comarch's wristband.
+	/// </summary>
+	/// <remarks>
+	/// Sample message: <c>[SG*8800000015*000D*LK,50,50,100]</c>
+	/// </remarks>
 	public class WatchDecoder : Decoder {
 		private string Vendor;
 		private string Imei;

@@ -13,17 +13,12 @@ using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {
 	/// <summary>
-	/// This decoder is meant to be used by a (NYI) mobile application.
+	/// Protocol commonly used by Concox devices. A lot of knock-off devices
+	/// also use this protocol, albeit often make off steps from the standard.
 	/// </summary>
-	public class JsonDecoder : Decoder {
-		protected override async Task DecodeAsync() {
-			var json = JsonConvert.DeserializeObject<JsonMessage>(Data);
-
-			if (json != null) {
-				await Respond(json.Imei);
-			} else {
-				await Respond("0");
-			}
+	public class Gt06Decoder : Decoder {
+		protected override Task DecodeAsync() {
+			throw new NotImplementedException();
 		}
 	}
 }

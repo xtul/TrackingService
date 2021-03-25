@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 
 namespace TrackingService.Model.Objects {
-	public class Device : TrackingCollection {
+	public class Device : TrackingServiceCollection {
 		public string Imei { get; set; }
 		public string Name { get; set; }
 		public float Lon { get; set; }

@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Storage {
-	public abstract class DefaultStore<T> where T : TrackingCollection {
+    /// <summary>
+    /// Default MongoDB collection CRUD operations.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+	public abstract class DefaultStore<T> where T : TrackingServiceCollection {
         private readonly IMongoCollection<T> _mongoCollection;
 
         public DefaultStore(IDatabaseSettings settings) {

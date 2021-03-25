@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace TrackingService.Model.Objects {
-	public class Position : TrackingCollection {
+	public class Position : TrackingServiceCollection {
 		public string Imei { get; set; }
 		public float Lon { get; set; }
 		public float Lat { get; set; }
