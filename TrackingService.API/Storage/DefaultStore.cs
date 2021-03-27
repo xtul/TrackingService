@@ -10,7 +10,7 @@ namespace TrackingService.API.Storage {
     /// Default MongoDB collection CRUD operations.
     /// </summary>
 	public abstract class DefaultStore<T> where T : TrackingServiceCollection {
-        private readonly IMongoCollection<T> _mongoCollection;
+        protected readonly IMongoCollection<T> _mongoCollection;
 
         public DefaultStore(IDatabaseSettings settings) {
             var client = new MongoClient(settings.ConnectionString);
@@ -30,12 +30,14 @@ namespace TrackingService.API.Storage {
         public T GetById(string id) =>
             _mongoCollection.Find(x => x.Id == id).FirstOrDefault();
 
-        public T Create(T collectionItem) {
+        public T Get(Position position) => GetById(position.Id);
+
+        public T Add(T collectionItem) {
             _mongoCollection.InsertOne(collectionItem);
             return collectionItem;
         }
 
-        public async Task<IEnumerable<T>> Create(IEnumerable<T> collectionItems) {
+        public async Task<IEnumerable<T>> AddManyAsync(IEnumerable<T> collectionItems) {
             await _mongoCollection.InsertManyAsync(collectionItems);
             return collectionItems;
 		}

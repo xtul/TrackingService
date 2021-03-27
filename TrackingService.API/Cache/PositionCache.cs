@@ -17,7 +17,9 @@ namespace TrackingService.API.Cache {
 		private readonly ILogger<PositionCache> _logger;
 		private readonly DeviceStore _deviceStore;
 		private readonly PositionStore _positionStore;
-		private readonly HashSet<Position> _positions;
+		private readonly List<Position> _positions;
+		private readonly List<string> _deviceWhitelist;
+		private readonly List<string> _deviceBlacklist;
 		private readonly Timer _timer;
 
 		public delegate void PositionCacheEventHandler(object sender, PositionAddedEventArgs args);
@@ -27,18 +29,28 @@ namespace TrackingService.API.Cache {
 			_logger = logger;
 			_deviceStore = deviceStore;
 			_positionStore = positionStore;
-			_positions = new HashSet<Position>();
+			_positions = new();
+			_deviceWhitelist = new();
+			_deviceBlacklist = new();
 
 			_timer = new Timer() {
 				AutoReset = true,
-				Interval = TimeSpan.FromMinutes(5).Milliseconds,
+				Interval = TimeSpan.FromMinutes(2).Milliseconds,
 			};
 			_timer.Elapsed += PersistPositionsEvent;
 			_timer.Start();
 		}
 
 		private async Task PersistPositions() {
-			await _positionStore.Create(_positions);
+			if (_positions.Count < 1) {
+				return;
+			}
+			
+			if (_positions.Count == 1) {
+				_positionStore.Add(_positions[0]);
+			} else {
+				await _positionStore.AddManyAsync(_positions);
+			}
 
 			_positions.Clear();
 		}
@@ -51,13 +63,31 @@ namespace TrackingService.API.Cache {
 			await PersistPositions();
 		}
 
-		public void Put(Position position) {
-			var isDeviceRegistered = _deviceStore.GetByImei(position.Imei) != null;
+		/// <returns>Removal result.</returns>
+		public bool RemoveDeviceFromBlacklist(string imei) {
+			return _deviceBlacklist.Remove(imei);
+		}
 
-			if (isDeviceRegistered) {
-				_positions.Add(position);
+		public void Put(Position position) {
+			if (_deviceBlacklist.Contains(position.Imei)) {
+				return;
 			}
 
+			// do we know if this device is registered?
+			if (!_deviceWhitelist.Contains(position.Imei)) {
+				// check database, maybe it knows
+				bool isDeviceRegistered = _deviceStore.GetByImei(position.Imei) != null;
+				if (isDeviceRegistered) {
+					// remember it so we don't have to query DB on each new position
+					_deviceWhitelist.Add(position.Imei);					
+				} else {
+					// not registered, blacklist it (remember to remove it from list if it gets registered)
+					_deviceBlacklist.Add(position.Imei);
+					return;
+				}
+			}
+
+			_positions.Add(position);
 			RaiseOnPositionRegistered(new PositionAddedEventArgs(position.Imei));
 		}
 
@@ -65,8 +95,12 @@ namespace TrackingService.API.Cache {
 			OnPositionRegistered?.Invoke(this, positionAddedEventArgs);
 		}
 
+		public Position Get(Position position) {
+			return GetById(position.Id);
+		}
+
 		public Position GetById(string id) {
-			var cachedPosition = _positions.Where(x => x.Id == id).FirstOrDefault();
+			var cachedPosition = _positions.Find(x => x.Id == id);
 
 			if (cachedPosition is null) {
 				return _positionStore.GetById(id);
@@ -75,14 +109,21 @@ namespace TrackingService.API.Cache {
 			return cachedPosition;
 		}
 
-		public Position GetByImei(string imei) {
-			var cachedPosition = _positions.Where(x => x.Imei == imei).FirstOrDefault();
+		public Position GetNewestByImei(string imei) {
+			var cachedPosition = _positions.Where(x => x.Imei == imei).OrderByDescending(x => x.Date).FirstOrDefault();
 
 			if (cachedPosition is null) {
 				return _positionStore.GetByImei(imei);
 			}
 
 			return cachedPosition;
+		}
+
+		public async Task<List<Position>> GetListByImei(string imei, DateTime from, DateTime to) {
+			// a list of positions shouldn't be cached; part of requested range may be outside 
+			// cached positions, so we would end up checking database anyway
+
+			return await _positionStore.GetPositionList(imei, from, to);
 		}
 	}
 }
