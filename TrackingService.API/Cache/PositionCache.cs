@@ -37,7 +37,7 @@ namespace TrackingService.API.Cache {
 			_timer.Start();
 		}
 
-		protected async Task PersistPositions() {
+		private async Task PersistPositions() {
 			await _positionStore.Create(_positions);
 
 			_positions.Clear();
