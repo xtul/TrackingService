@@ -36,14 +36,15 @@ namespace TrackingService.API {
 			services.AddSingleton<PositionStore>();
 			services.AddSingleton<DeviceStore>();
 
-			services.AddControllers();
+			services.AddControllers()
+				.AddNewtonsoftJson(o => o.UseMemberCasing());
 			services.AddSwaggerGen(c => {
 				c.SwaggerDoc("v1", new OpenApiInfo { Title = "TrackingService.API", Version = "v1" });
 			});
 
 		}
 
-		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime) {
 			if (env.IsDevelopment()) {
 				app.UseDeveloperExceptionPage();
 				app.UseSwagger();
@@ -60,7 +61,13 @@ namespace TrackingService.API {
 				endpoints.MapControllers();
 			});
 
+			// setup position cache
 			PositionCache = app.ApplicationServices.GetRequiredService<PositionCache>();
+			lifetime.ApplicationStopping.Register(OnShutdown);
+		}
+
+		private async void OnShutdown() {
+			await PositionCache.ForcePersistPositions();
 		}
 	}
 }

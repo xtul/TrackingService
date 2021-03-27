@@ -19,6 +19,11 @@ namespace TrackingService.Model.Objects {
         string ConnectionString { get; set; }
         string DatabaseName { get; set; }
 
+        /// <summary>
+        /// Gets collection name by string.
+        /// </summary>
+        /// <param name="collection">Class name, like "Position".</param>
+        /// <returns></returns>
         public string GetCollectionByString(string collection) {
 			return collection switch {
 				"Position" => PositionsName,

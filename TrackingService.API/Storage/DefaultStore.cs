@@ -21,13 +21,13 @@ namespace TrackingService.API.Storage {
             _mongoCollection = database.GetCollection<T>(settings.GetCollectionByString(collectionName));
         }
 
-        public List<T> Get() =>
+        public List<T> GetAll() =>
             _mongoCollection.Find(x => true).ToList();
 
         public T GetByImei(string imei) =>
             _mongoCollection.Find(x => x.Imei == imei).FirstOrDefault();
 
-        public T Get(string id) =>
+        public T GetById(string id) =>
             _mongoCollection.Find(x => x.Id == id).FirstOrDefault();
 
         public T Create(T collectionItem) {
