@@ -86,7 +86,7 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			var existingUser = await _userManager.FindByEmailAsync(user.Email);
+			var existingUser = await _userManager.FindByNameAsync(user.Name);
 			if (existingUser is null) {
 				return BadRequest(new AuthResult() {
 					Success = false,
