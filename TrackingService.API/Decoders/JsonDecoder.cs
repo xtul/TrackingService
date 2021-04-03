@@ -1,14 +1,6 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.IO;
-using System.IO.Pipelines;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using TrackingService.API.Cache;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {
@@ -16,16 +8,14 @@ namespace TrackingService.API.Decoders {
 	/// This decoder is meant to be used by a (NYI) mobile application.
 	/// </summary>
 	public class JsonDecoder : Decoder {
-		protected override async Task<Position> DecodeAsync(string data) {
-			var json = JsonConvert.DeserializeObject<JsonMessage>(data);
+		protected override Task<Position> DecodeAsync(string data) {
+			var position = JsonConvert.DeserializeObject<Position>(data);
 
-			if (json != null) {
-				await Respond(json.Imei);
-			} else {
-				await Respond("0");
+			if (position is null) {
+				return null;
 			}
 
-			return null;
+			return Task.FromResult(position);
 		}
 	}
 }

@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Newtonsoft.Json;
 
 namespace TrackingService.Model.Objects {
-	public class Position : TrackingServiceCollection {
+	public class Position : TrackingEntity {
 		public string Protocol { get; set; }
 		/// <summary>
 		/// Longitude.
@@ -19,16 +20,23 @@ namespace TrackingService.Model.Objects {
 		public DateTime Date { get; set; }
 		public float Speed { get; set; }
 		private float _direction;
-
-		public Position() {
-			MiscInfo = new MiscInfo();
-		}
-
 		public float Direction {
 			get => _direction;
 			set => _direction = value % 360f;
 		}
-		public MiscInfo MiscInfo { get; set; }
+		private string _miscInfo;
+		public MiscInfo MiscInfo {
+			get {
+				return JsonConvert.DeserializeObject<MiscInfo>(string.IsNullOrEmpty(_miscInfo) ? "{}" : _miscInfo);
+			}
+			set {
+				try {
+					_miscInfo = JsonConvert.SerializeObject(value);
+				} catch (NullReferenceException) {
+					_miscInfo = "{}";
+				}
+			}
+		}
 
 		public override string ToString() {
 			return $"-------------------------------------\n" +

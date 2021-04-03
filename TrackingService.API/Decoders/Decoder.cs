@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Text;
 using System.Threading.Tasks;
+using TrackingService.API.Cache;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {

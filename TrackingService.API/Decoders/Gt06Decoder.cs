@@ -9,6 +9,7 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TrackingService.API.Cache;
 using TrackingService.Model.Objects;
 
 namespace TrackingService.API.Decoders {

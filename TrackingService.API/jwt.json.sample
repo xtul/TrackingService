@@ -1,0 +1,6 @@
+{
+	"JwtConfig": {
+		"Secret": "your-jwt-secret-goes-here",
+		"SecondsLifespan": 30
+	}
+}
