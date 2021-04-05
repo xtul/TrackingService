@@ -98,7 +98,7 @@ namespace TrackingService.API.Controllers {
 
 			var isPasswordCorrect = await _userManager.CheckPasswordAsync(existingUser, user.Password);
 			if (isPasswordCorrect) {
-				var jwtToken = GenerateJwtTokenAsync(existingUser);
+				var jwtToken = await GenerateJwtTokenAsync(existingUser);
 
 				return Ok(jwtToken);
 			} else {
