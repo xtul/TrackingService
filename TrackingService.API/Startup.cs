@@ -41,6 +41,7 @@ namespace TrackingService.API {
 
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddControllersWithViews();
+			services.AddCors();
 
 			// configure database
 			var dbSettings = new ConfigurationBuilder()
@@ -112,6 +113,12 @@ namespace TrackingService.API {
 			app.UseStaticFiles();
 
 			app.UseRouting();
+
+			app.UseCors(x => x
+				.AllowAnyMethod()
+				.AllowAnyHeader()
+				.SetIsOriginAllowed(origin => true)
+				.AllowCredentials());
 
 			app.UseAuthentication();
 			app.UseAuthorization();
