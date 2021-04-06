@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TrackingService.API.Database;
@@ -9,9 +10,10 @@ using TrackingService.API.Database;
 namespace TrackingService.API.Migrations
 {
     [DbContext(typeof(TrackingDbContext))]
-    partial class TrackingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210406215637_UserDevice_CompositeKey")]
+    partial class UserDevice_CompositeKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -30,12 +32,11 @@ namespace TrackingService.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
 
+                    b.HasKey("DeviceId", "UserId")
+                        .HasName("pk_user_device");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_device_user_id");
-
-                    b.HasIndex("DeviceId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_user_device_device_id_user_id");
 
                     b.ToTable("user_device");
                 });

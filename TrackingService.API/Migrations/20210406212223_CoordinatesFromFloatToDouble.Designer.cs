@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TrackingService.API.Database;
@@ -9,9 +10,10 @@ using TrackingService.API.Database;
 namespace TrackingService.API.Migrations
 {
     [DbContext(typeof(TrackingDbContext))]
-    partial class TrackingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210406212223_CoordinatesFromFloatToDouble")]
+    partial class CoordinatesFromFloatToDouble
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,6 +24,12 @@ namespace TrackingService.API.Migrations
 
             modelBuilder.Entity("TrackingService.Model.Objects.DbSet.UserDevice", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
                     b.Property<int>("DeviceId")
                         .HasColumnType("integer")
                         .HasColumnName("device_id");
@@ -30,12 +38,14 @@ namespace TrackingService.API.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
 
+                    b.HasKey("Id")
+                        .HasName("pk_user_device");
+
+                    b.HasIndex("DeviceId")
+                        .HasDatabaseName("ix_user_device_device_id");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_device_user_id");
-
-                    b.HasIndex("DeviceId", "UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_user_device_device_id_user_id");
 
                     b.ToTable("user_device");
                 });
@@ -85,20 +95,22 @@ namespace TrackingService.API.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("date");
 
-                    b.Property<decimal>("Direction")
-                        .HasColumnType("numeric")
+                    b.Property<double>("Direction")
+                        .HasColumnType("double precision")
                         .HasColumnName("direction");
 
                     b.Property<string>("Imei")
                         .HasColumnType("text")
                         .HasColumnName("imei");
 
-                    b.Property<decimal>("Lat")
-                        .HasColumnType("numeric")
+                    b.Property<double>("Lat")
+                        .HasPrecision(6)
+                        .HasColumnType("double precision")
                         .HasColumnName("lat");
 
-                    b.Property<decimal>("Lon")
-                        .HasColumnType("numeric")
+                    b.Property<double>("Lon")
+                        .HasPrecision(6)
+                        .HasColumnType("double precision")
                         .HasColumnName("lon");
 
                     b.Property<string>("MiscInfo")
@@ -109,8 +121,8 @@ namespace TrackingService.API.Migrations
                         .HasColumnType("text")
                         .HasColumnName("protocol");
 
-                    b.Property<decimal>("Speed")
-                        .HasColumnType("numeric")
+                    b.Property<double>("Speed")
+                        .HasColumnType("double precision")
                         .HasColumnName("speed");
 
                     b.HasKey("Id")
