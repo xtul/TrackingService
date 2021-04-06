@@ -8,15 +8,15 @@ namespace TrackingService.API.Extensions {
 		/// <summary>
 		/// Converts kilometers per hour to miles per hour.
 		/// </summary>
-		public static float ToKph(this float miles) {
-			return (float)(miles * 1.609344);
+		public static double ToKph(this double miles) {
+			return Math.Round(miles * 1.609344, 1, MidpointRounding.ToZero);
 		}
 
 		/// <summary>
 		/// Converts miles per hour to kilometers per hour.
 		/// </summary>
-		public static float ToMph(this float kilometers) {
-			return (float)(kilometers * 0.6213712);
+		public static double ToMph(this double kilometers) {
+			return Math.Round(kilometers * 0.6213712, 1, MidpointRounding.ToZero);
 		}
 	}
 }

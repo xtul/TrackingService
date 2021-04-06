@@ -28,13 +28,13 @@ namespace TrackingService.Model.Objects {
 		public DateTime Date { get; set; }
 		private double _speed;
 		public double Speed {
-			get => Math.Round(_speed, 2, MidpointRounding.AwayFromZero);
-			set => _speed = Math.Round(value, 2, MidpointRounding.AwayFromZero);
+			get => Math.Round(_speed, 1, MidpointRounding.ToZero);
+			set => _speed = Math.Round(value, 1, MidpointRounding.ToZero);
 		}
 		private double _direction;
 		public double Direction {
-			get => Math.Round(_direction, 2, MidpointRounding.AwayFromZero);
-			set => _direction = Math.Round(value % 360d, 2, MidpointRounding.AwayFromZero);
+			get => Math.Round(_direction, 1, MidpointRounding.ToZero);
+			set => _direction = Math.Round(value % 360d, 1, MidpointRounding.ToZero);
 		}
 		private string _miscInfo;
 		public MiscInfo MiscInfo {

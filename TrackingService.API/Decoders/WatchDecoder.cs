@@ -68,15 +68,15 @@ namespace TrackingService.API.Decoders {
 				var hasPosition = splitContent[3] == "A";
 
 				// InvariantCulture needed to parse dot as a floating point
-				var latitude = float.Parse(splitContent[4], CultureInfo.InvariantCulture);
+				var latitude = double.Parse(splitContent[4], CultureInfo.InvariantCulture);
 				if (splitContent[5] == "S") latitude *= -1;
-				var longitude = float.Parse(splitContent[6], CultureInfo.InvariantCulture);
+				var longitude = double.Parse(splitContent[6], CultureInfo.InvariantCulture);
 				if (splitContent[7] == "E") longitude *= -1;
 				Watch.Lat = latitude;
 				Watch.Lon = longitude;
 
-				Watch.Speed = float.Parse(splitContent[8], CultureInfo.InvariantCulture).ToKph();
-				Watch.Direction = float.Parse(splitContent[9], CultureInfo.InvariantCulture);
+				Watch.Speed = double.Parse(splitContent[8], CultureInfo.InvariantCulture).ToKph();
+				Watch.Direction = double.Parse(splitContent[9], CultureInfo.InvariantCulture);
 
 				var alarmCode = int.Parse(splitContent[16]); // in protocol it's padded to four 0s, int.Parse removes it
 				if (messageMode != "AL") alarmCode = -1;
