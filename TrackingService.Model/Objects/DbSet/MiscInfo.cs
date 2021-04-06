@@ -8,7 +8,7 @@ namespace TrackingService.Model.Objects {
 		/// <summary>
 		/// Altitude.
 		/// </summary>
-		public float Alt { get; set; }
+		public int Alt { get; set; }
 		public int Satellites { get; set; }
 		private int _signalStrength;
 		public int SignalStrength {

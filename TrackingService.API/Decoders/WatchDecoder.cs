@@ -29,7 +29,7 @@ namespace TrackingService.API.Decoders {
 		public string Vendor;
 		public string Imei;
 
-		protected override async Task<Position> DecodeAsync(string data) {
+		public override async Task<Position> DecodeAsync(string data) {
 			if (!data.StartsWith("[") || !data.EndsWith("]")) {
 				// discard, obviously bad message
 				return null;

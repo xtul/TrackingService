@@ -8,7 +8,7 @@ namespace TrackingService.API.Decoders {
 	/// This decoder is meant to be used by a (NYI) mobile application.
 	/// </summary>
 	public class JsonDecoder : Decoder {
-		protected override Task<Position> DecodeAsync(string data) {
+		public override Task<Position> DecodeAsync(string data) {
 			var position = JsonConvert.DeserializeObject<Position>(data);
 
 			if (position is null) {

@@ -53,7 +53,7 @@ namespace TrackingService.API.Decoders {
 		/// <returns>
 		///	A decoded position.
 		/// </returns>
-		protected abstract Task<Position> DecodeAsync(string data);
+		public abstract Task<Position> DecodeAsync(string data);
 
 		/// <summary>
 		/// Sends a <paramref name="message"/> to connected device.
@@ -74,6 +74,7 @@ namespace TrackingService.API.Decoders {
 		/// Sends a <paramref name="buffer"/> to connected device.
 		/// </summary>
 		protected async Task Respond(ReadOnlySequence<byte> buffer) {
+			if (Pipe is not null)
 			foreach (var segment in buffer) {
 				await Pipe.Output.WriteAsync(segment);
 			}

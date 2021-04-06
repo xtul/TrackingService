@@ -22,10 +22,6 @@ namespace TrackingService.API.Database {
 			// configure Positions so MiscInfo is stored as json string
 			b.ApplyConfiguration(new PositionsConfiguration());
 			b.Entity<Position>().HasIndex(x => x.Imei);
-			b.Entity<Position>().Property(x => x.Lon).HasPrecision(6);
-			b.Entity<Position>().Property(x => x.Lat).HasPrecision(6);
-			b.Entity<Position>().Property(x => x.Speed).HasPrecision(2);
-			b.Entity<Position>().Property(x => x.Direction).HasPrecision(2);
 			b.Entity<Device>().HasIndex(x => x.Imei);
 		}
 

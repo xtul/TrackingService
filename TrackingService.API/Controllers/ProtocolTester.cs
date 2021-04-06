@@ -44,7 +44,7 @@ namespace TrackingService.API.Controllers {
 
 		[HttpPost]
 		[Route("json")]
-		public string PostJson([FromBody] JsonMessage json) {
+		public string PostJson([FromBody] Position json) {
 			var message = JsonConvert.SerializeObject(json);
 
 			return GetResponse(message, 6001);

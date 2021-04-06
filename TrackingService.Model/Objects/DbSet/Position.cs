@@ -18,10 +18,14 @@ namespace TrackingService.Model.Objects {
 		/// </summary>
 		public float Lat { get; set; }
 		public DateTime Date { get; set; }
-		public float Speed { get; set; }
-		private float _direction;
-		public float Direction {
-			get => _direction;
+		private double _speed;
+		public double Speed {
+			get => Math.Round(_speed, 1, MidpointRounding.ToZero);
+			set => _speed = value;
+		}
+		private double _direction;
+		public double Direction {
+			get => Math.Round(_direction, 2, MidpointRounding.ToZero);
 			set => _direction = value % 360f;
 		}
 		private string _miscInfo;
@@ -35,6 +39,12 @@ namespace TrackingService.Model.Objects {
 				} catch (NullReferenceException) {
 					_miscInfo = "{}";
 				}
+			}
+		}
+
+		public Position() {
+			if (MiscInfo is null) {
+				MiscInfo = new();
 			}
 		}
 
