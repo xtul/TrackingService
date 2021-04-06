@@ -124,9 +124,9 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			var res = await VerifyToken(tokenRequest);
+			var result = await VerifyToken(tokenRequest);
 
-			if (res is null) {
+			if (result is null) {
 				return BadRequest(new AuthResult() {
 					Success = false,
 					Errors = new List<string>() {
@@ -135,9 +135,13 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			return Ok(res);
+			return Ok(result);
 		}
 
+		/// <summary>
+		/// Verifies the JWT token
+		/// </summary>
+		/// <returns>A new, valid token.</returns>
 		private async Task<AuthResult> VerifyToken(TokenRequestDto tokenRequest) {
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -224,9 +228,8 @@ namespace TrackingService.API.Controllers {
 		}
 
 		private static DateTime UnixTimeStampToDateTime(double unixTimeStamp) {
-			DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-			return dtDateTime;
+			DateTime epochTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+			return epochTime.AddSeconds(unixTimeStamp).ToLocalTime();
 		}
 
 		private async Task<AuthResult> GenerateJwtTokenAsync(TrackingUser user) {
