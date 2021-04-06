@@ -77,17 +77,20 @@ namespace TrackingService.API.Decoders {
 
 				Watch.Speed = float.Parse(splitContent[8], CultureInfo.InvariantCulture).ToKph();
 				Watch.Direction = float.Parse(splitContent[9], CultureInfo.InvariantCulture);
-				Watch.MiscInfo.Alt = int.Parse(splitContent[10]);
-				Watch.MiscInfo.Satellites = int.Parse(splitContent[11]);
-				Watch.MiscInfo.SignalStrength = int.Parse(splitContent[12]);
-				Watch.MiscInfo.Battery = splitContent[13] + "%";
-				Watch.MiscInfo.Steps = int.Parse(splitContent[14]);
-				// index 15 - "rolling times"
+
 				var alarmCode = int.Parse(splitContent[16]); // in protocol it's padded to four 0s, int.Parse removes it
 				if (messageMode != "AL") alarmCode = -1;
-				Watch.MiscInfo.Alarm = (AlarmKinds)alarmCode;
-				Watch.MiscInfo.Mcc = int.Parse(splitContent[19]);
-				Watch.MiscInfo.Mnc = int.Parse(splitContent[20]);				
+
+				Watch.MiscInfo = new MiscInfo() {
+					Alt = int.Parse(splitContent[10]),
+					Satellites = int.Parse(splitContent[11]),
+					SignalStrength = int.Parse(splitContent[12]),
+					Battery = splitContent[13] + "%",
+					Steps = int.Parse(splitContent[14]),
+					Alarm = (AlarmKinds)alarmCode,
+					Mcc = int.Parse(splitContent[19]),
+					Mnc = int.Parse(splitContent[20])
+				};
 
 				if (messageMode == "AL") {
 					await WatchRespond("AL");
