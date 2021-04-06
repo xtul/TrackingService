@@ -9,24 +9,32 @@ using Newtonsoft.Json;
 namespace TrackingService.Model.Objects {
 	public class Position : TrackingEntity {
 		public string Protocol { get; set; }
+		private double _lon;
 		/// <summary>
 		/// Longitude.
 		/// </summary>
-		public float Lon { get; set; }
+		public double Lon {
+			get => Math.Round(_lon, 6, MidpointRounding.AwayFromZero);
+			set => _lon = Math.Round(value, 6, MidpointRounding.AwayFromZero);
+		}
+		private double _lat;
 		/// <summary>
 		/// Latitude.
 		/// </summary>
-		public float Lat { get; set; }
+		public double Lat {
+			get => Math.Round(_lat, 6, MidpointRounding.AwayFromZero);
+			set => _lat = Math.Round(value, 6, MidpointRounding.AwayFromZero);
+		}
 		public DateTime Date { get; set; }
 		private double _speed;
 		public double Speed {
-			get => Math.Round(_speed, 1, MidpointRounding.ToZero);
-			set => _speed = value;
+			get => Math.Round(_speed, 2, MidpointRounding.AwayFromZero);
+			set => _speed = Math.Round(value, 2, MidpointRounding.AwayFromZero);
 		}
 		private double _direction;
 		public double Direction {
-			get => Math.Round(_direction, 2, MidpointRounding.ToZero);
-			set => _direction = value % 360f;
+			get => Math.Round(_direction, 2, MidpointRounding.AwayFromZero);
+			set => _direction = Math.Round(value % 360d, 2, MidpointRounding.AwayFromZero);
 		}
 		private string _miscInfo;
 		public MiscInfo MiscInfo {
