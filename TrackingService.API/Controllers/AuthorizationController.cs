@@ -113,6 +113,27 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpPost]
+		[Route("validate")]
+		public async Task<IActionResult> ValidateToken([FromBody] TokenRequestDto tokenRequest) {
+			if (!ModelState.IsValid) {
+				return BadRequest(new AuthResult() {
+					Success = false,
+					Errors = new List<string>() {
+						"Invalid payload."
+					}
+				});
+			}
+
+			var result = await VerifyToken(tokenRequest);
+
+			if (result is not null && result.Success) {
+				return Ok("Token is valid.");
+			} else {
+				return BadRequest("Token is invalid.");
+			}
+		}
+
+		[HttpPost]
 		[Route("refresh")]
 		public async Task<IActionResult> RefreshToken([FromBody] TokenRequestDto tokenRequest) {
 			if (!ModelState.IsValid) {
@@ -149,7 +170,7 @@ namespace TrackingService.API.Controllers {
 				// check if token is valid (against defined token parameters)
 				var principal = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenParams, out var validatedToken);
 				if (validatedToken is JwtSecurityToken jwtSecurityToken) {
-					var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+					var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512, StringComparison.InvariantCultureIgnoreCase);
 
 					if (!result) {
 						return null;
@@ -161,10 +182,9 @@ namespace TrackingService.API.Controllers {
 
 				if (expirationDate > DateTime.UtcNow) {
 					return new AuthResult() {
-						Success = false,
-						Errors = new List<string>() { 
-							"Token has not expired yet."
-						}
+						Success = true,
+						Token = tokenRequest.Token,
+						RefreshToken = tokenRequest.RefreshToken
 					};
 				}
 
