@@ -126,11 +126,10 @@ namespace TrackingService.API.Controllers {
 
 			var result = await VerifyToken(tokenRequest);
 
-			if (result is not null && result.Success) {
-				return Ok("Token is valid.");
-			} else {
-				return BadRequest("Token is invalid.");
+			if (result is null || !result.Success) {
+				return BadRequest("Token is invalid. Try to refresh it.");
 			}
+			return Ok("Token is valid.");
 		}
 
 		[HttpPost]
@@ -145,7 +144,7 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			var result = await VerifyToken(tokenRequest);
+			var result = await VerifyToken(tokenRequest, true);
 
 			if (result is null) {
 				return BadRequest(new AuthResult() {
@@ -162,43 +161,62 @@ namespace TrackingService.API.Controllers {
 		/// <summary>
 		/// Verifies the JWT token
 		/// </summary>
-		/// <returns>A new, valid token.</returns>
-		private async Task<AuthResult> VerifyToken(TokenRequestDto tokenRequest) {
+		/// <returns>A new, valid token or reason of error.</returns>
+		private async Task<AuthResult> VerifyToken(TokenRequestDto tokenRequest, bool refreshIfExpired = false) {
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
-
+			var storedRefreshToken = _context.RefreshTokens
+					.AsNoTracking()
+					.FirstOrDefault(x => x.Token == tokenRequest.RefreshToken);
+			
 			try {
-				// check if token is valid (against defined token parameters)
+				// validate token
 				var principal = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenParams, out var validatedToken);
-				if (validatedToken is JwtSecurityToken jwtSecurityToken) {
-					var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512, StringComparison.InvariantCultureIgnoreCase);
 
-					if (!result) {
-						return null;
-					}
-				}
-
-				var expirationDateTimestamp = long.Parse(principal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-				var expirationDate = UnixTimeStampToDateTime(expirationDateTimestamp);
-
-				if (expirationDate > DateTime.UtcNow) {
-					return new AuthResult() {
-						Success = true,
-						Token = tokenRequest.Token,
-						RefreshToken = tokenRequest.RefreshToken
-					};
-				}
-
-				var storedRefreshToken = _context.RefreshTokens.AsNoTracking().FirstOrDefault(x => x.Token == tokenRequest.RefreshToken);
-				if (storedRefreshToken == null) {
+				var jwtId = principal.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+				if (storedRefreshToken.JwtId != jwtId) {
 					return new AuthResult() {
 						Success = false,
-						Errors = new List<string>() { 
-							"No such refresh token exists."
+						Errors = new List<string>() {
+							"Provided token doesn't match saved token."
 						}
 					};
 				}
 
-				if (DateTime.UtcNow > storedRefreshToken.ExpiryDate) {
+				if (validatedToken is JwtSecurityToken jwtSecurityToken) {
+					var hasCorrectAlgo = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512, StringComparison.InvariantCultureIgnoreCase);
+
+					if (!hasCorrectAlgo) {
+						return null;
+					}
+				}
+
+				// check if refresh token is used or revoked
+				if (storedRefreshToken.IsUsed) {
+					return new AuthResult() {
+						Success = false,
+						Errors = new List<string>() {
+						"Token is in use."
+					}
+					};
+				}
+
+				if (storedRefreshToken.IsRevoked) {
+					return new AuthResult() {
+						Success = false,
+						Errors = new List<string>() {
+						"Token has been revoked."
+					}
+					};
+				}
+
+				// everything went well
+				return new AuthResult() {
+					Success = true,
+					Token = tokenRequest.Token,
+					RefreshToken = tokenRequest.RefreshToken
+				};
+			} catch (SecurityTokenExpiredException) {
+				if (!refreshIfExpired) {
 					return new AuthResult() {
 						Success = false,
 						Errors = new List<string>() {
@@ -207,30 +225,12 @@ namespace TrackingService.API.Controllers {
 					};
 				}
 
-				if (storedRefreshToken.IsUsed) {
+				// generate new token only if requested refresh token exists				
+				if (storedRefreshToken == null) {
 					return new AuthResult() {
 						Success = false,
 						Errors = new List<string>() {
-							"Token is in use."
-						}
-					};
-				}
-
-				if (storedRefreshToken.IsRevoked) {
-					return new AuthResult() {
-						Success = false,
-						Errors = new List<string>() {
-							"Token has been revoked."
-						}
-					};
-				}
-
-				var jwtId = principal.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
-				if (storedRefreshToken.JwtId != jwtId) {
-					return new AuthResult() {
-						Success = false,
-						Errors = new List<string>() {
-							"Provided token doesn't match saved token."
+							"No such refresh token exists."
 						}
 					};
 				}
@@ -259,7 +259,7 @@ namespace TrackingService.API.Controllers {
 			var tokenDescriptor = new SecurityTokenDescriptor {
 				Subject = new ClaimsIdentity(new[] {
 					new Claim("Id", user.Id.ToString()),
-					new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+					new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
 					new Claim(JwtRegisteredClaimNames.Email, user.Email),
 					new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
 				}),

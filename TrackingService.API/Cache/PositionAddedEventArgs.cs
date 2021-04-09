@@ -8,7 +8,7 @@ namespace TrackingService.API.Cache {
 		public string Imei { get; set; }
 		
 		public PositionAddedEventArgs(string imei) {
-			Imei = imei;		}
-
+			Imei = imei;
+		}
 	}
 }
