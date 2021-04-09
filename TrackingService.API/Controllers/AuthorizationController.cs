@@ -115,7 +115,7 @@ namespace TrackingService.API.Controllers {
 		[HttpPost]
 		[Route("refresh")]
 		public async Task<IActionResult> RefreshToken([FromBody] TokenRequestDto tokenRequest) {
-			if (ModelState.IsValid) {
+			if (!ModelState.IsValid) {
 				return BadRequest(new AuthResult() {
 					Success = false,
 					Errors = new List<string>() {
