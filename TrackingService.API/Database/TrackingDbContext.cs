@@ -28,7 +28,7 @@ namespace TrackingService.API.Database {
 			b.Entity<Position>().Property(x => x.Lat).HasColumnType("numeric");
 			b.Entity<Position>().Property(x => x.Speed).HasColumnType("numeric");
 			b.Entity<Position>().Property(x => x.Direction).HasColumnType("numeric");
-			b.Entity<Device>().HasIndex(x => x.Imei);
+			b.Entity<Device>().HasIndex(x => x.Imei).IsUnique();
 
 			b.Entity<UserDevice>().HasIndex(x => new { x.DeviceId, x.UserId }).IsUnique();
 			b.Entity<UserDevice>().HasNoKey();
