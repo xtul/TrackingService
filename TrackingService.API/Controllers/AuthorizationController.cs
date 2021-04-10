@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -108,8 +109,33 @@ namespace TrackingService.API.Controllers {
 						"Invalid request."
 					}
 				});
-
 			}
+		}
+
+		[HttpPost]
+		[Route("revoke")]
+		[Authorize]
+		public async Task<IActionResult> RevokeToken([FromBody] TokenRequestDto tokenRequest) {
+			if (!ModelState.IsValid) {
+				return BadRequest(new AuthResult() {
+					Success = false,
+					Errors = new List<string>() {
+						"Invalid payload."
+					}
+				});
+			}
+
+			var token = await _context.RefreshTokens
+				.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+
+			if (token is not null) {
+				token.IsRevoked = true;
+				await _context.SaveChangesAsync();
+
+				return Ok();
+			}
+
+			return BadRequest();
 		}
 
 		[HttpPost]
@@ -247,11 +273,9 @@ namespace TrackingService.API.Controllers {
 			}
 		}
 
-		private static DateTime UnixTimeStampToDateTime(double unixTimeStamp) {
-			DateTime epochTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-			return epochTime.AddSeconds(unixTimeStamp).ToLocalTime();
-		}
-
+		/// <summary>
+		/// Generates JWT token and creates a refresh token for it.
+		/// </summary>
 		private async Task<AuthResult> GenerateJwtTokenAsync(TrackingUser user) {
 			var jwtTokenHandler = new JwtSecurityTokenHandler();
 			var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
