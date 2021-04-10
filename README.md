@@ -3,7 +3,7 @@ An experimental, work-in-progress GPS tracking service. For web interface, [see 
 
 ## Usage
 
-TrackingService is not yet usable. Currently the only GPS tracking protocol implemented is `watch`. It's usually used by mobile GPS trackers based on MTK6261 CPU. It is also highly possible that Comarch's wristband uses this protocol - all cheap, chinese wrist devices have common features, battery size (~300mAH) or even shape.
+TrackingService is not yet usable. Currently the only GPS tracking protocol implemented is `watch`. It's usually used by mobile GPS trackers based on MTK6261 CPU. It is also highly possible that Comarch's wristband uses this protocol - all cheap, chinese wrist devices have common features, battery size (~300mAH), shape, even packaging is usually the same. For example, [this device](https://www.alibaba.com/product-detail/Factory-gps-smartwatch-X6-phone-android_1600210996211.html) is extremely likely to use `watch` protocol.
 
 You can also send position data as JSON - see [Position.cs](https://github.com/xtul/TrackingService/blob/master/TrackingService.Model/Objects/DbSet/Position.cs). By default, JSON decoder listens on port 6001.
 
