@@ -283,7 +283,12 @@ namespace TrackingService.API.Controllers {
 				await _context.SaveChangesAsync();
 
 				var dbUser = await _userManager.FindByIdAsync(storedRefreshToken.UserId.ToString());
-				var jwtId = principal.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+				string jwtId = "";
+				if (principal is null) {
+					jwtId = jwtTokenHandler.ReadJwtToken(tokenRequest.Token).Id;
+				} else {
+					jwtId = principal.Claims.SingleOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+				}
 				return await GenerateJwtTokenAsync(dbUser, tokenRequest.RefreshToken, jwtId);
 			} catch (Exception ex) {
 				_logger.LogError(ex.ToString());

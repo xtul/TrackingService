@@ -27,7 +27,8 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> GetDevice([FromQuery] string imei) {
+		[Route("{imei}")]
+		public async Task<IActionResult> GetDevice(string imei) {
 			var userId = int.Parse(User.FindFirstValue("Id"));
 
 			var deviceExists = DeviceExists(imei, out var foundDevice);
@@ -48,7 +49,6 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpGet]
-		[Route("all")]
 		public async Task<IActionResult> GetDevices() {
 			var userId = int.Parse(User.FindFirstValue("Id"));
 
