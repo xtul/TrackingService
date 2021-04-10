@@ -125,16 +125,22 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			var token = await _context.RefreshTokens
-				.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+			var user = await _userManager.GetUserAsync(User);
+			if (user is not null) {
+				var token = await _context.RefreshTokens
+					.FirstOrDefaultAsync(x => 
+						x.UserId == user.Id && 
+						x.Token == tokenRequest.RefreshToken
+					);
 
-			if (token is not null) {
-				token.IsRevoked = true;
-				await _context.SaveChangesAsync();
+				if (token is not null) {
+					token.IsRevoked = true;
+					await _context.SaveChangesAsync();
 
-				return Ok();
-			}
-
+					return Ok();
+				}
+			}	
+			
 			return BadRequest();
 		}
 
