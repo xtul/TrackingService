@@ -125,10 +125,6 @@ namespace TrackingService.API.Controllers {
 				});
 			}
 
-			foreach (var claim in User.Claims) {
-				Console.WriteLine($"{claim.Type}: {claim.Value}");
-			}
-
 			var username = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
 			var user = await _userManager.FindByNameAsync(username);
