@@ -25,6 +25,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using TrackingService.API.Database;
 using System.Text.Json.Serialization;
+using Hangfire;
+using Hangfire.PostgreSql;
+using TrackingService.API.Hangfire;
 
 namespace TrackingService.API {
 	public class Startup {
@@ -50,6 +53,7 @@ namespace TrackingService.API {
 				.Build()
 				.GetSection(nameof(DatabaseSettings))
 				.Get<DatabaseSettings>();
+			services.AddSingleton(dbSettings);
 			services.AddDbContext<TrackingDbContext>(o => {
 				o.UseNpgsql(dbSettings.ConnectionString);
 			});
@@ -103,6 +107,17 @@ namespace TrackingService.API {
 				jwt.SaveToken = true;
 				jwt.TokenValidationParameters = tokenValidationParameters;
 			});
+
+			// hangfire
+			services.AddHangfire(configuration => configuration
+				.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+				.UseSimpleAssemblyNameTypeSerializer()
+				.UseRecommendedSerializerSettings()
+				.UsePostgreSqlStorage(dbSettings.HangfireString, new PostgreSqlStorageOptions() {
+					PrepareSchemaIfNecessary = true
+				}));
+
+			services.AddHangfireServer();
 		}
 
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime) {
@@ -134,6 +149,15 @@ namespace TrackingService.API {
 			// setup position cache
 			PositionCache = app.ApplicationServices.GetRequiredService<PositionCache>();
 			lifetime.ApplicationStopping.Register(OnShutdown);
+
+			// configure hangfire jobs
+			if (env.IsDevelopment()) {
+				BackgroundJob.Enqueue<Jobs>(x => x.RemoveDeadRefreshTokens());
+				BackgroundJob.Enqueue<Jobs>(x => x.RemoveOldPositions());
+			} else {
+				RecurringJob.AddOrUpdate<Jobs>(x => x.RemoveDeadRefreshTokens(), Cron.Daily);
+				RecurringJob.AddOrUpdate<Jobs>(x => x.RemoveOldPositions(), Cron.Daily);
+			}
 		}
 
 		private async void OnShutdown() {

@@ -8,22 +8,13 @@ namespace TrackingService.Model.Objects {
 
     public class DatabaseSettings : IDatabaseSettings {
         public string ConnectionString { get; set; }
+        public string HangfireString { get; set; }
+        public int PositionDaysToKeep { get; set; }
     }
 
     public interface IDatabaseSettings {
         string ConnectionString { get; set; }
-
-        /// <summary>
-        /// Gets collection name by string.
-        /// </summary>
-        /// <param name="collection">Class name, like "Position".</param>
-        /// <returns></returns>
-        public string GetCollectionByString(string collection) {
-			return collection switch {
-				"Position" => "a",
-				"Device" => "a",
-				_ => throw new ArgumentException($"No collection could be found by string \"{collection}\"."),
-			};
-		}
+        string HangfireString { get; set; }
+        public int PositionDaysToKeep { get; set; }
     }
 }
