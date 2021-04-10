@@ -1,6 +1,7 @@
 {
 	"JwtConfig": {
 		"Secret": "your-jwt-secret-goes-here",
-		"SecondsLifespan": 900
+		"SigningKey": "your-jwt-signing-key-goes-here",
+		"SecondsLifespan": 15
 	}
 }

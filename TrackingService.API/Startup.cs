@@ -80,14 +80,17 @@ namespace TrackingService.API {
 				.GetSection("JwtConfig")
 				.Get<JwtConfig>();
 			services.AddSingleton(jwtConfig);
-			var key = Encoding.ASCII.GetBytes(jwtConfig.Secret);
+			var signingKey = Encoding.ASCII.GetBytes(jwtConfig.SigningKey);
+			var secret = Encoding.ASCII.GetBytes(jwtConfig.Secret);
 
 			var tokenValidationParameters = new TokenValidationParameters {
 				ValidateIssuerSigningKey = true,
-				IssuerSigningKey = new SymmetricSecurityKey(key),
-				ValidateIssuer = false,
+				IssuerSigningKey = new SymmetricSecurityKey(signingKey),
+				TokenDecryptionKey = new SymmetricSecurityKey(secret),
+				ValidateIssuer = true,
+				ValidIssuer = "tracking-server",
 				ValidateAudience = false,
-				RequireExpirationTime = false,
+				RequireExpirationTime = true,
 				ValidateLifetime = true
 			};
 			services.AddSingleton(tokenValidationParameters);
@@ -98,7 +101,7 @@ namespace TrackingService.API {
 			})
 			.AddJwtBearer(jwt => {
 				jwt.SaveToken = true;
-				jwt.TokenValidationParameters = tokenValidationParameters;				
+				jwt.TokenValidationParameters = tokenValidationParameters;
 			});
 		}
 
@@ -127,8 +130,6 @@ namespace TrackingService.API {
 				endpoints.MapControllers();
 				endpoints.MapRazorPages();
 			});
-
-			app.UseCookiePolicy();
 
 			// setup position cache
 			PositionCache = app.ApplicationServices.GetRequiredService<PositionCache>();
