@@ -1,0 +1,133 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Timers;
+using TrackingService.API.Database;
+using TrackingService.Model.Objects;
+using TrackingService.Model.Objects.DataStructures;
+using TrackingService.Model.Objects.DbSet;
+
+namespace TrackingService.API.Cache {
+	/// <summary>
+	/// Stores positions in-memory for quick access and 
+	/// persists them periodically in a database.
+	/// </summary>
+	public class DeviceCache : DatabaseCache {
+		private readonly IServiceScopeFactory _scopeFactory;
+		private readonly ILogger<DeviceCache> _logger;
+		private readonly IndexedList<Device> _devices;
+		private readonly List<Device> _deviceAddQueue;
+		private readonly Dictionary<int, List<Device>> _userDevices;
+		private readonly List<UserDevice> _userDevicesQueue;
+
+		public DeviceCache(ILogger<DeviceCache> logger, IServiceScopeFactory scopeFactory) {
+			_scopeFactory = scopeFactory;
+			_logger = logger;
+			_devices = new();
+			_userDevices = new();
+			_deviceAddQueue = new();
+			_userDevicesQueue = new();
+
+			using (var scope = _scopeFactory.CreateScope()) {
+				var db = GetContext(scope);
+				// convert userDevices to an dictionary
+				var users = db.UserDevice.Select(x => x.UserId).ToArray();
+				foreach (var user in users) {
+					var devicesOfUser = db.UserDevice
+						.Where(x => x.UserId == user)
+						.Select(x => x.Device)
+						.ToList();
+					_userDevices.Add(user, devicesOfUser);
+				}
+
+				var devices = db.Devices.ToList();
+				_devices.AddManyWithImeiKey(devices);
+			}
+		}
+
+		public Device GetDevice(int userId, string imei) {
+			var deviceExists = DeviceExists(imei, out var foundDevice);
+			if (!deviceExists) {
+				return null;
+			}
+
+			var canSeeDevice = CanUserSeeDevice(userId, foundDevice.Id);
+
+			if (canSeeDevice) {
+				return foundDevice;
+			} else {
+				return null;
+			}
+		}
+
+		public List<Device> GetDevices(int userId) {
+			return _userDevices[userId];
+		}
+
+		public async Task CreateDeviceAsync(Device device, int userId) {
+			_devices.Add(device.Imei, device);
+			_userDevices[userId].Add(device);
+
+			using (var scope = _scopeFactory.CreateScope()) {
+				var db = GetContext(scope);
+
+				db.Devices.Add(device);
+				db.UserDevice.Add(new UserDevice() {
+					UserId = userId,
+					Device = device // auto assigns a device ID
+				});
+
+				await db.SaveChangesAsync();
+			}
+		}
+
+		public async Task<bool> ReplaceDeviceAsync(string imei, Device device) {
+			var deviceToUpdate = _devices.FindSingle(imei);
+			_devices.Replace(imei, deviceToUpdate, device);
+
+			using (var scope = _scopeFactory.CreateScope()) {
+				var db = GetContext(scope);
+				try {
+					db.Update(device);
+					await db.SaveChangesAsync();
+				} catch (DbUpdateConcurrencyException) {
+					if (!DeviceExists(device.Imei, out _)) {
+						return false;
+					} else {
+						throw;
+					}
+				}
+			}
+
+			return true;
+		}
+
+		public bool RemoveDevice(string imei) {
+			return _devices.Remove(imei, null);
+		}
+
+		public bool DeviceExists(string imei, out Device device) {
+			var searchedDevice = _devices.FindSingle(imei);
+			if (searchedDevice is not null) {
+				device = searchedDevice;
+				return true;
+			} else {
+				device = null;
+				return false;
+			}
+		}
+
+		public bool CanUserSeeDevice(int userId, int deviceId) {
+			return _userDevices[userId].Exists(x => x.Id == deviceId);
+		}
+
+		public bool CanUserSeeDevice(int userId, string imei) {
+			return _userDevices[userId].Exists(x => x.Imei == imei);
+		}
+	}
+}

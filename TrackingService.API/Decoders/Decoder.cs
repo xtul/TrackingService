@@ -31,7 +31,7 @@ namespace TrackingService.API.Decoders {
 				Data = Encoding.ASCII.GetString(buffer);
 				var position = await DecodeAsync(Data);
 				if (position is not null) {
-					Startup.PositionCache.Put(position);
+					Startup.PositionCache.Add(position);
 				}
 
 				if (result.IsCompleted) {
