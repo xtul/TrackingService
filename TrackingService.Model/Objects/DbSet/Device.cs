@@ -10,6 +10,5 @@ namespace TrackingService.Model.Objects {
 	public class Device : TrackingEntity {
 		public string Name { get; set; }
 		public bool Enabled { get; set; } = true;
-		public int LastPositionId { get; set; }
 	}
 }
