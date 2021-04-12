@@ -20,18 +20,14 @@ namespace TrackingService.API.Cache {
 	public class DeviceCache : DatabaseCache {
 		private readonly IServiceScopeFactory _scopeFactory;
 		private readonly ILogger<DeviceCache> _logger;
-		private readonly IndexedList<Device> _devices;
-		private readonly List<Device> _deviceAddQueue;
+		private readonly Dictionary<string, Device> _devices;
 		private readonly Dictionary<int, List<Device>> _userDevices;
-		private readonly List<UserDevice> _userDevicesQueue;
 
 		public DeviceCache(ILogger<DeviceCache> logger, IServiceScopeFactory scopeFactory) {
 			_scopeFactory = scopeFactory;
 			_logger = logger;
 			_devices = new();
 			_userDevices = new();
-			_deviceAddQueue = new();
-			_userDevicesQueue = new();
 
 			using (var scope = _scopeFactory.CreateScope()) {
 				var db = GetContext(scope);
@@ -46,7 +42,9 @@ namespace TrackingService.API.Cache {
 				}
 
 				var devices = db.Devices.ToList();
-				_devices.AddManyWithImeiKey(devices);
+				foreach (var device in devices) {
+					_devices.Add(device.Imei, device);
+				}
 			}
 		}
 
@@ -70,6 +68,10 @@ namespace TrackingService.API.Cache {
 		}
 
 		public async Task CreateDeviceAsync(Device device, int userId) {
+			if (_devices.ContainsKey(device.Imei)) {
+				return;
+			}
+
 			_devices.Add(device.Imei, device);
 			_userDevices[userId].Add(device);
 
@@ -87,8 +89,7 @@ namespace TrackingService.API.Cache {
 		}
 
 		public async Task<bool> ReplaceDeviceAsync(string imei, Device device) {
-			var deviceToUpdate = _devices.FindSingle(imei);
-			_devices.Replace(imei, deviceToUpdate, device);
+			_devices[imei] = device;
 
 			using (var scope = _scopeFactory.CreateScope()) {
 				var db = GetContext(scope);
@@ -108,11 +109,11 @@ namespace TrackingService.API.Cache {
 		}
 
 		public bool RemoveDevice(string imei) {
-			return _devices.Remove(imei, null);
+			return _devices.Remove(imei);
 		}
 
 		public bool DeviceExists(string imei, out Device device) {
-			var searchedDevice = _devices.FindSingle(imei);
+			var searchedDevice = _devices[imei];
 			if (searchedDevice is not null) {
 				device = searchedDevice;
 				return true;
