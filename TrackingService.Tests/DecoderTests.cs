@@ -17,7 +17,7 @@ namespace TrackingService.Tests {
 			Assert.Equal("8800000015", position.Imei);
 			Assert.Equal(new DateTime(2014,4,22,13,46,52), position.Date);
 			Assert.Equal(22.571707, position.Lat);
-			Assert.Equal(-113.861397, position.Lon); // should round "away from zero", despite GPS tracker reporting above 6 decimal places
+			Assert.Equal(113.861397, position.Lon); // should round "away from zero", despite GPS tracker reporting above 6 decimal places
 			Assert.Equal(0.1d, position.Speed);
 			Assert.Equal(0.0d, position.Direction);
 			Assert.Equal(100, position.MiscInfo.Alt);
