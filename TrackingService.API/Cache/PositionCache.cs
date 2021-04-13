@@ -76,7 +76,7 @@ namespace TrackingService.API.Cache {
 		}
 
 		public Position GetNewestByImei(string imei) {
-			var cachedPosition = _positions.GetAll(imei).OrderByDescending(x => x.Date).FirstOrDefault();
+			var cachedPosition = _positions.GetAll(imei)?.OrderByDescending(x => x.Date).FirstOrDefault() ?? null;
 
 			if (cachedPosition is null) {
 				using (var scope = _scopeFactory.CreateScope()) {

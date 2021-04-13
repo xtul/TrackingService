@@ -36,7 +36,13 @@ namespace TrackingService.Model.Objects.DataStructures {
 
 		public List<T> FindMany(string key, Func<T, bool> func) => _dict[key]?.Where(func).ToList() ?? null;
 
-		public List<T> GetAll(string key) => _dict[key] ?? null;
+		public List<T> GetAll(string key) {
+			if (!_dict.ContainsKey(key)) {
+				return null;
+			}
+
+			return _dict[key];
+		}
 
 		/// <returns>If removal was successful.</returns>
 		public bool RemoveAll(string key) {
