@@ -71,7 +71,7 @@ namespace TrackingService.API.Decoders {
 				var latitude = double.Parse(splitContent[4], CultureInfo.InvariantCulture);
 				if (splitContent[5] == "S") latitude *= -1;
 				var longitude = double.Parse(splitContent[6], CultureInfo.InvariantCulture);
-				if (splitContent[7] == "E") longitude *= -1;
+				if (splitContent[7] == "W") longitude *= -1;
 				Watch.Lat = latitude;
 				Watch.Lon = longitude;
 
