@@ -26,7 +26,7 @@ namespace TrackingService.API.Hubs {
 				return;
 			}
 
-			var json = JsonConvert.SerializeObject(_positionCache.GetNewestByImei(e.Imei));
+			var json = JsonConvert.SerializeObject(e.Position);
 			await _caller.SendAsync("position", e.Imei, json);
 		}
 
