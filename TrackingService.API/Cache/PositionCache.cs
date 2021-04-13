@@ -68,7 +68,7 @@ namespace TrackingService.API.Cache {
 			}
 
 			_positions.Add(position.Imei, position);
-			RaiseOnPositionRegistered(new PositionAddedEventArgs(position.Imei));
+			RaiseOnPositionRegistered(new PositionAddedEventArgs(position.Imei, position));
 		}
 
 		private void RaiseOnPositionRegistered(PositionAddedEventArgs positionAddedEventArgs) {
