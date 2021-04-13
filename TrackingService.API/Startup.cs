@@ -110,6 +110,17 @@ namespace TrackingService.API {
 			.AddJwtBearer(jwt => {
 				jwt.SaveToken = true;
 				jwt.TokenValidationParameters = tokenValidationParameters;
+				jwt.Events = new JwtBearerEvents {
+					OnMessageReceived = context => {
+						var accessToken = context.Request.Query["access_token"];
+
+						var path = context.HttpContext.Request.Path;
+						if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/PositionsHub")) {
+							context.Token = accessToken;
+						}
+						return Task.CompletedTask;
+					}
+				};
 			});
 
 			// hangfire
