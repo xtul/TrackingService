@@ -28,6 +28,8 @@ using System.Text.Json.Serialization;
 using Hangfire;
 using Hangfire.PostgreSql;
 using TrackingService.API.Hangfire;
+using Microsoft.AspNetCore.WebSockets;
+using TrackingService.API.Hubs;
 
 namespace TrackingService.API {
 	public class Startup {
@@ -59,11 +61,13 @@ namespace TrackingService.API {
 			});
 
 			services.AddSingleton<PositionCache>();
+			services.AddSingleton<DeviceCache>();
 
 			services.AddRazorPages();
 			services.AddSwaggerGen(c => {
 				c.SwaggerDoc("v1", new OpenApiInfo { Title = "TrackingService.API", Version = "v1" });
 			});
+			services.AddSignalR();
 
 			// identity
 			services.AddIdentityCore<TrackingUser>(options => {
@@ -141,9 +145,13 @@ namespace TrackingService.API {
 			app.UseAuthentication();
 			app.UseAuthorization();
 
+			// support live position updates
+			app.UseWebSockets();
+
 			app.UseEndpoints(endpoints => {
 				endpoints.MapControllers();
 				endpoints.MapRazorPages();
+				endpoints.MapHub<PositionsHub>("/PositionsHub");
 			});
 
 			// setup position cache

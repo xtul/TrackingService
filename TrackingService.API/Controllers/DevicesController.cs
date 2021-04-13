@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using TrackingService.API.Cache;
 using TrackingService.API.Database;
 using TrackingService.Model.Objects;
 using TrackingService.Model.Objects.DbSet;
@@ -17,30 +18,24 @@ namespace TrackingService.API.Controllers {
 	[ApiController]
 	[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 	public class DevicesController : ControllerBase {
-		private readonly TrackingDbContext _context;
-		private const string Bind = "Name,Enabled,LastPositionId,Imei";
-		private readonly List<Device> _existsCache;
+		private const string Bind = "Name,Enabled,Imei";
+		private readonly DeviceCache _deviceCache;
 
-		public DevicesController(TrackingDbContext context) {
-			_context = context;
-			_existsCache = new();
+		public DevicesController(DeviceCache cache) {
+			_deviceCache = cache;
 		}
 
 		[HttpGet]
 		[Route("{imei}")]
-		public async Task<IActionResult> GetDevice(string imei) {
+		public IActionResult GetDevice(string imei) {
 			var userId = int.Parse(User.FindFirstValue("Id"));
 
-			var deviceExists = DeviceExists(imei, out var foundDevice);
+			var deviceExists = _deviceCache.DeviceExists(imei, out var foundDevice);
 			if (!deviceExists) {
 				return BadRequest();
 			}
 
-			var canUserSeeDevice = await _context.UserDevice
-				.AnyAsync(x => 
-					x.UserId == userId && 
-					x.DeviceId == foundDevice.Id
-				);
+			var canUserSeeDevice = _deviceCache.CanUserSeeDevice(userId, foundDevice.Id);
 			if (canUserSeeDevice) {
 				return Ok(foundDevice);
 			}
@@ -49,46 +44,33 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> GetDevices() {
+		public IActionResult GetDevices() {
 			var userId = int.Parse(User.FindFirstValue("Id"));
 
-			var userDevices = await _context.UserDevice
-				.Where(x => x.UserId == userId)
-				.Select(x => x.DeviceId)
-				.ToListAsync();
+			var userDevices = _deviceCache.GetDevices(userId);
 
 			if (userDevices is null || userDevices.Count < 1) {
 				return BadRequest();
 			}
 
-			var devices = await _context.Devices
-				.AsNoTracking()
-				.Where(x => userDevices.Contains(x.Id))
-				.ToListAsync();
-
-			return Ok(devices);
+			return Ok(userDevices);
 		}
 
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> CreateDevice([Bind(Bind)] Device device) {
+		public async Task<IActionResult> CreateDevice([Bind(Bind)][FromBody] Device device) {
 			if (!ModelState.IsValid) {
 				return BadRequest(device);
 			}
 
-			var deviceExists = DeviceExists(device.Imei, out _);
+
+			var deviceExists = _deviceCache.DeviceExists(device.Imei, out _);
 			if (deviceExists) {
 				return BadRequest("Device already exists.");
 			}
 
-			_context.Add(device);
-			// also create binding to this device for this user
-			_context.UserDevice.Add(new() {
-				UserId = int.Parse(User.FindFirstValue("Id")),
-				DeviceId = device.Id
-			});
-
-			await _context.SaveChangesAsync();
+			var userId = int.Parse(User.FindFirstValue("Id"));
+			await _deviceCache.CreateDeviceAsync(device, userId);
 
 			return Ok(device);
 		}
@@ -104,62 +86,21 @@ namespace TrackingService.API.Controllers {
 				return BadRequest();
 			}
 
-			try {
-				_context.Update(device);
-				await _context.SaveChangesAsync();
-			} catch (DbUpdateConcurrencyException) {
-				if (!DeviceExists(device.Id, out _)) {
-					return NotFound();
-				} else {
-					throw;
-				}
-			}
+			await _deviceCache.ReplaceDeviceAsync(device.Imei, device);
 
 			return Ok(device);
 		}
 
 		[HttpDelete]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> DeleteDevice(int id) {
-			var device = await _context.Devices.FindAsync(id);
-			_context.Devices.Remove(device);
-			await _context.SaveChangesAsync();
-			return RedirectToAction(nameof(Index));
-		}
+		public IActionResult DeleteDevice(string imei) {
+			var removed = _deviceCache.RemoveDevice(imei);
 
-		private bool DeviceExists(int id, out Device device) {
-			var deviceInCache = _existsCache.Where(x => x.Id == id).FirstOrDefault();
-			if (deviceInCache is not null) {
-				device = deviceInCache;
-				return true;
+			if (removed) {
+				return Ok("Deleted.");
 			}
 
-			var searchedDevice = _context.Devices.Find(id);
-			if (searchedDevice is not null) {
-				device = searchedDevice;
-				_existsCache.Add(searchedDevice);
-			} else {
-				device = null;
-			}
-
-			return searchedDevice is not null;
-		}
-
-		private bool DeviceExists(string imei, out Device device) {
-			var deviceInCache = _existsCache.Where(x => x.Imei == imei).FirstOrDefault();
-			if (deviceInCache is not null) {
-				device = deviceInCache;
-				return true;
-			}
-
-			var searchedDevice = _context.Devices.AsNoTracking().Where(x => x.Imei == imei).FirstOrDefault();
-			if (searchedDevice is not null) {
-				device = searchedDevice;
-			} else {
-				device = null;
-			}
-
-			return searchedDevice is not null;
+			return BadRequest();
 		}
 	}
 }
