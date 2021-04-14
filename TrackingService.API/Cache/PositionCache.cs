@@ -63,7 +63,12 @@ namespace TrackingService.API.Cache {
 		}
 
 		public void Add(Position position) {
-			if (!_deviceCache.DeviceExists(position.Imei, out _)) {
+			if (!_deviceCache.DeviceExists(position.Imei, out var device)) {
+				return;
+			}
+
+			// ignore disabled device positions
+			if (!device.Enabled) {
 				return;
 			}
 

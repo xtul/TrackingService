@@ -126,12 +126,17 @@ namespace TrackingService.API.Cache {
 			}
 		}
 
+		public bool CanUserSeeDevice(int userId, Predicate<Device> func) {
+			return _userDevices[userId].Exists(func);
+		}
+
 		public bool CanUserSeeDevice(int userId, int deviceId) {
-			return _userDevices[userId].Exists(x => x.Id == deviceId);
+			return CanUserSeeDevice(userId, x => x.Id == deviceId);
+
 		}
 
 		public bool CanUserSeeDevice(int userId, string imei) {
-			return _userDevices[userId].Exists(x => x.Imei == imei);
+			return CanUserSeeDevice(userId, x => x.Imei == imei);
 		}
 	}
 }
