@@ -38,7 +38,10 @@ namespace TrackingService.API.Cache {
 						.Where(x => x.UserId == user)
 						.Select(x => x.Device)
 						.ToList();
-					_userDevices.Add(user, devicesOfUser);
+
+					if (!_userDevices.ContainsKey(user)) {
+						_userDevices.Add(user, devicesOfUser);
+					}
 				}
 
 				var devices = db.Devices.ToList();

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using TrackingService.API.Cache;
 
 namespace TrackingService.API.Hubs {
-	[Authorize]
+	[Authorize(AuthenticationSchemes = "Bearer")]
 	public class PositionsHub : Hub {
 		private readonly List<string> _subscribedDevices = new();
 		private readonly PositionCache _positionCache;
@@ -22,7 +22,7 @@ namespace TrackingService.API.Hubs {
 		}
 
 		private async void OnPositionRegistered(object sender, PositionAddedEventArgs e) {
-			if (!_subscribedDevices.Contains(e.Imei)) {
+			if (!_subscribedDevices.Contains(e.Imei) || _caller is null) {
 				return;
 			}
 
@@ -62,6 +62,7 @@ namespace TrackingService.API.Hubs {
 			// send first positions and add to subscribed devices
 			foreach (var imei in deviceImeis) {
 				var position = _positionCache.GetNewestByImei(imei);
+				_subscribedDevices.Add(imei);
 
 				// device may not have first position
 				if (position is null) {
@@ -70,12 +71,10 @@ namespace TrackingService.API.Hubs {
 
 				var json = JsonConvert.SerializeObject(position);
 				await Clients.Caller.SendAsync("position", imei, json);
-
-				_subscribedDevices.Add(imei);
-				_caller = Clients.Caller;
 			}
 
 			// if everything is OK, begin subscription
+			_caller = Clients.Caller;
 			_positionCache.OnPositionRegistered += OnPositionRegistered;
 		}
 	}
