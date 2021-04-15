@@ -92,24 +92,13 @@ namespace TrackingService.API.Cache {
 		}
 
 		public async Task<bool> ReplaceDeviceAsync(string imei, Device device) {
-
-			// if IMEI was changed...
-			if (imei != device.Imei) {
-				_devices.Remove(imei);
-				_devices.Add(imei, device);
-			} else {
-				_devices[imei] = device;				
-			}		
+			_devices[imei] = device;
 
 			using (var scope = _scopeFactory.CreateScope()) {
 				var db = GetContext(scope);
 				try {
-					var entity = db.Devices.FirstOrDefault(x => x.Imei == imei);
-
-					if (entity is not null) {
-						entity.CopyValues(device);
-						await db.SaveChangesAsync();
-					}
+					db.Update(device);
+					await db.SaveChangesAsync();
 				} catch (DbUpdateConcurrencyException) {
 					if (!DeviceExists(device.Imei, out _)) {
 						return false;
