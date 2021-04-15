@@ -57,7 +57,6 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpPost]
-		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> CreateDevice([Bind(Bind)][FromBody] Device device) {
 			if (!ModelState.IsValid) {
 				return BadRequest(device);
@@ -76,23 +75,22 @@ namespace TrackingService.API.Controllers {
 		}
 
 		[HttpPut]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> UpdateDevice(int id, [Bind(Bind)] Device device) {
-			if (id != device.Id) {
-				return BadRequest();
-			}
-
+		[Route("{imei}")]
+		public async Task<IActionResult> UpdateDevice(string imei, [Bind(Bind)][FromBody] Device device) {
 			if (!ModelState.IsValid) {
 				return BadRequest();
 			}
 
-			await _deviceCache.ReplaceDeviceAsync(device.Imei, device);
+			if (!_deviceCache.DeviceExists(imei, out _)) {
+				return BadRequest();
+			}
+
+			await _deviceCache.ReplaceDeviceAsync(imei, device);
 
 			return Ok(device);
 		}
 
 		[HttpDelete]
-		[ValidateAntiForgeryToken]
 		public IActionResult DeleteDevice(string imei) {
 			var removed = _deviceCache.RemoveDevice(imei);
 
